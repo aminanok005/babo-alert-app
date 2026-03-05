@@ -1,0 +1,62 @@
+/* เพิ่มในส่วนท้ายของ style.css */
+
+.context-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #e8f5e9;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #2e7d32;
+}
+
+.status-dot {
+    font-size: 18px;
+}
+
+.context-viewer {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.context-viewer h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.context-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+.context-content {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
