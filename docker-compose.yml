@@ -16,6 +16,7 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - FONT_PATH=/usr/share/fonts/truetype/ibm-plex/IBMPlexSansThai-Regular.ttf
       - N8N_WEBHOOK_URL=http://n8n:5678/webhook/clip-ready
+      - N8N_API_KEY=${N8N_API_KEY}
     volumes:
       - ./app/output:/app/output
       - ./app/context:/app/context
@@ -42,8 +43,10 @@ services:
       - SUPABASE_KEY=${SUPABASE_KEY}
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - N8N_API_KEY=${N8N_API_KEY}
     volumes:
       - n8n-data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows
     networks:
       - quran-network
     restart: unless-stopped
