@@ -1,0 +1,56 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # ===== แอปหลัก (FastAPI) =====
+  quran-app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: quran-7clip-app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - FONT_PATH=/usr/share/fonts/truetype/ibm-plex/IBMPlexSansThai-Regular.ttf
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/clip-ready
+    volumes:
+      - ./app/output:/app/output
+      - ./app/context:/app/context
+      - ./app/assets:/app/assets
+    depends_on:
+      - n8n
+    networks:
+      - quran-network
+    restart: unless-stopped
+
+  # ===== n8n Workflow Automation =====
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: quran-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - N8N_HOST=0.0.0.0
+      - WEBHOOK_URL=http://localhost:5678/
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - quran-network
+    restart: unless-stopped
+
+networks:
+  quran-network:
+    driver: bridge
+
+volumes:
+  n8n-data:

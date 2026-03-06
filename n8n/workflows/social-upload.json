@@ -1,0 +1,248 @@
+{
+  "name": "Quran Clip - Social Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clip-ready",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clips",
+        "headers": {
+          "apikey": "={{ $env.SUPABASE_KEY }}",
+          "Authorization": "Bearer {{ $env.SUPABASE_KEY }}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "project_id": "={{ $json.project_id }}",
+          "clip_number": "={{ $json.clip_number }}",
+          "video_url": "={{ $json.video_url }}",
+          "status": "ready_for_upload"
+        },
+        "options": {}
+      },
+      "name": "Update Supabase Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "id": "update-status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "logic": "and",
+          "conditions": [
+            {
+              "value1": "={{ $json.platform }}",
+              "operation": "equal",
+              "value2": "youtube"
+            }
+          ]
+        }
+      },
+      "name": "Filter YouTube",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "id": "filter-youtube"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/upload/youtube/v3/videos",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{ $env.YOUTUBE_API_KEY }}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "snippet": {
+            "title": "Quran Clip {{ $json.clip_number }}",
+            "description": "Islamic content - {{ $json.topic }}"
+          },
+          "status": {
+            "privacyStatus": "public"
+          }
+        },
+        "options": {}
+      },
+      "name": "Upload to YouTube",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 200],
+      "id": "upload-youtube"
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendVideo",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "chat_id": "={{ $env.TELEGRAM_CHAT_ID }}",
+          "video": "={{ $json.video_url }}",
+          "caption": "🎬 Quran Clip {{ $json.clip_number }}"
+        },
+        "options": {}
+      },
+      "name": "Upload to Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 400],
+      "id": "upload-telegram"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/social_uploads",
+        "headers": {
+          "apikey": "={{ $env.SUPABASE_KEY }}",
+          "Authorization": "Bearer {{ $env.SUPABASE_KEY }}"
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "clip_id",
+              "value": "={{ $json.clip_id }}"
+            },
+            {
+              "name": "platform",
+              "value": "={{ $json.platform }}"
+            },
+            {
+              "name": "platform_url",
+              "value": "={{ $json.result_url }}"
+            },
+            {
+              "name": "status",
+              "value": "completed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Save Upload Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 300],
+      "id": "save-record"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/clips",
+        "method": "PATCH",
+        "headers": {
+          "apikey": "={{ $env.SUPABASE_KEY }}",
+          "Authorization": "Bearer {{ $env.SUPABASE_KEY }}",
+          "Content-Type": "application/json"
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "youtube_url",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Update Clip YouTube URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 200],
+      "id": "update-clip"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Update Supabase Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Supabase Status": {
+      "main": [
+        [
+          {
+            "node": "Filter YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter YouTube": {
+      "main": [
+        [
+          {
+            "node": "Upload to YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to YouTube": {
+      "main": [
+        [
+          {
+            "node": "Update Clip YouTube URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Clip YouTube URL": {
+      "main": [
+        [
+          {
+            "node": "Save Upload Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Telegram": {
+      "main": [
+        [
+          {
+            "node": "Save Upload Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
