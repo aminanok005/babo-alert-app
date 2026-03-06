@@ -49,10 +49,25 @@ Path("templates").mkdir(exist_ok=True)
 Path("assets").mkdir(exist_ok=True)
 
 # --- Request/Response Models ---
+
+# Valid character options
+VALID_CHARACTERS = ["sheikh", "omar", "aisha"]
+
 class GenerateRequest(BaseModel):
     verse_reference: str  # เช่น "Al-Anbiya 1-3"
     topic: Optional[str] = None
     language: str = "th"
+    # Character selection fields for avatar/voice cloning
+    character: str = "sheikh"
+    character_name: Optional[str] = "Sheikh Ahmad Al-Thai"
+    use_avatar: bool = True
+    use_voice_clone: bool = True
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Validate character is in allowed list
+        if self.character not in VALID_CHARACTERS:
+            raise ValueError(f"character must be one of: {VALID_CHARACTERS}")
 
 class ClipStatus(BaseModel):
     clip_number: int
@@ -233,7 +248,10 @@ async def process_generation(job_id: str, request: GenerateRequest):
             audio_path = await generate_audio(
                 clip_data["text"], 
                 clip_idx + 1, 
-                output_dir
+                output_dir,
+                character=request.character,
+                character_name=request.character_name,
+                use_voice_clone=request.use_voice_clone
             )
             
             # Generate Video
@@ -241,7 +259,10 @@ async def process_generation(job_id: str, request: GenerateRequest):
                 audio_path, 
                 clip_data["text"], 
                 clip_idx + 1, 
-                output_dir
+                output_dir,
+                character=request.character,
+                character_name=request.character_name,
+                use_avatar=request.use_avatar
             )
             
             video_url = f"/output/{job_id}/clip_{clip_idx + 1}.mp4"

@@ -1,12 +1,96 @@
 import asyncio
 import os
 from pathlib import Path
+import logging
 
-async def render_video(audio_path, text, clip_number, output_dir):
-    """Render video from audio and text using ffmpeg"""
+logger = logging.getLogger(__name__)
+
+# Try to import avatar generator (optional dependency)
+try:
+    from app.utils.islamic_avatar import IslamicAvatarGenerator
+    AVATAR_GENERATOR_AVAILABLE = True
+except ImportError:
+    AVATAR_GENERATOR_AVAILABLE = False
+    logger.warning("IslamicAvatarGenerator not available - avatar generation disabled")
+
+
+async def render_video(
+    audio_path,
+    text,
+    clip_number,
+    output_dir,
+    character: str = None,
+    character_name: str = None,
+    use_avatar: bool = False
+):
+    """Render video from audio and text using ffmpeg
+    
+    Args:
+        audio_path: Path to audio file
+        text: Text overlay for the video
+        clip_number: Clip number for naming
+        output_dir: Output directory
+        character: Character identifier (e.g., 'sheikh', 'omar', 'aisha')
+        character_name: Character display name
+        use_avatar: Whether to generate AI avatar video
+    """
     output_path = output_dir / f"clip_{clip_number}.mp4"
     
-    # Find available font
+    # Try avatar generation first if enabled and available
+    if use_avatar and AVATAR_GENERATOR_AVAILABLE and character:
+        try:
+            logger.info(f"Using avatar for clip {clip_number} with character: {character}")
+            
+            with IslamicAvatarGenerator() as avatar_gen:
+                # Generate avatar video
+                result = await avatar_gen.generate_talking_avatar_video(
+                    avatar_id=_get_character_avatar_id(character),
+                    script_text=text,
+                    language="th-TH",
+                    title=f"Clip {clip_number}"
+                )
+                
+                if result.success:
+                    logger.info(f"Avatar generation succeeded for clip {clip_number}")
+                    # If avatar succeeded but doesn't have video path, use fallback
+                    if result.data and result.data.get("video_url"):
+                        # Download and return the avatar video
+                        return await _download_avatar_video(result.data["video_url"], str(output_path))
+                    return str(output_path)
+                else:
+                    logger.warning(f"Avatar generation failed: {result.error_message}, using fallback")
+        except Exception as e:
+            logger.warning(f"Avatar generation error: {e}, using fallback")
+    
+    # Fallback: Create video with text overlay (original implementation)
+    return await _render_fallback_video(audio_path, text, clip_number, output_dir)
+
+
+async def _download_avatar_video(video_url: str, output_path: str) -> str:
+    """Download avatar video from URL"""
+    import aiohttp
+    async with aiohttp.ClientSession() as session:
+        async with session.get(video_url) as response:
+            if response.status == 200:
+                with open(output_path, 'wb') as f:
+                    async for chunk in response.content.iter_chunked(8192):
+                        f.write(chunk)
+                return output_path
+    raise Exception(f"Failed to download avatar video from {video_url}")
+
+
+def _get_character_avatar_id(character: str) -> str:
+    """Get avatar ID for a character"""
+    avatar_ids = {
+        "sheikh": "avatar_sheikh_001",
+        "omar": "avatar_omar_001",
+        "aisha": "avatar_aisha_001"
+    }
+    return avatar_ids.get(character, avatar_ids["sheikh"])
+
+
+async def _render_fallback_video(audio_path, text, clip_number, output_dir):
+    """Original fallback video rendering with text overlay"""
     font_paths = [
         "/usr/share/fonts/truetype/ibm-plex/IBMPlexSansThai-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",

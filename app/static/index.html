@@ -94,6 +94,43 @@
                 </div>
             </section>
 
+            <section class="character-section results-section" style="display: none;">
+                <div class="character-selection">
+                    <div class="card-header">
+                        <i class="fas fa-tasks"></i>
+                        <h2>เลือกตัวละคร</h2>
+                    </div>
+                    <div class="character-grid">
+                        <div class="character-card" data-character="sheikh">
+                            <div class="character-avatar placeholder">SHA</div>
+                            <h4>Sheikh Ahmad Al-Thai</h4>
+                            <p>นักวิชาการอิสลาม</p>
+                        </div>
+                        <div class="character-card" data-character="omar">
+                            <div class="character-avatar placeholder">OMR</div>
+                            <h4>Omar Young Muslim</h4>
+                            <p>เยาวชนมุสลิม</p>
+                        </div>
+                        <div class="character-card" data-character="aisha">
+                            <div class="character-avatar placeholder">AIS</div>
+                            <h4>Sister Aisha</h4>
+                            <p>นักวิชาการหญิง</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="avatar-options">
+                    <label>
+                        <input type="checkbox" id="useAvatar" checked>
+                        ใช้ AI Avatar (HeyGen)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="useVoiceClone" checked>
+                        ใช้ Voice Clone
+                    </label>
+                </div>
+            </section>
+
             <!-- Context Viewer Section -->
             <section class="context-section">
                 <div class="card">
@@ -111,6 +148,9 @@
                             </button>
                             <button class="tab-btn" onclick="showContext('skills')">
                                 <i class="fas fa-tools"></i> Skills
+                            </button>
+                            <button class="tab-btn" onclick="showContext('islamicGuidelines')">
+                                <i class="fas fa-tools"></i> Islamic Guidelines
                             </button>
                         </div>
                         <div class="context-content-wrapper">

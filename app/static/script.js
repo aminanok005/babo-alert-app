@@ -23,11 +23,21 @@ async function generateClips() {
     initWorkflowSteps();
     
     try {
+        // Get character selection
+        const characterData = getCharacterSelection();
+        
         // Start generation
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ verse_reference: verseRef, topic: topic })
+            body: JSON.stringify({ 
+                verse_reference: verseRef, 
+                topic: topic,
+                character: characterData.character,
+                character_name: characterData.character_name,
+                use_avatar: characterData.use_avatar,
+                use_voice_clone: characterData.use_voice_clone
+            })
         });
         
         const data = await response.json();
@@ -256,4 +266,28 @@ function resetApp() {
 // โหลด Context เริ่มต้น
 document.addEventListener('DOMContentLoaded', () => {
     showContext('memory');
+    
+    // Character selection handlers
+    document.querySelectorAll('.character-card').forEach(card => {
+        card.addEventListener('click', () => {
+            // Remove selected class from all cards
+            document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+            // Add selected class to clicked card
+            card.classList.add('selected');
+        });
+    });
 });
+
+// Get current character selection
+function getCharacterSelection() {
+    const selectedCard = document.querySelector('.character-card.selected');
+    const useAvatar = document.getElementById('useAvatar')?.checked ?? true;
+    const useVoiceClone = document.getElementById('useVoiceClone')?.checked ?? true;
+    
+    return {
+        character: selectedCard?.dataset.character || 'sheikh',
+        character_name: selectedCard?.querySelector('h4')?.textContent || 'Sheikh Ahmad Al-Thai',
+        use_avatar: useAvatar,
+        use_voice_clone: useVoiceClone
+    };
+}
